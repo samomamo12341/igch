@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>INSTAGRAM USERNAME HUNTER — Teşhis ve Doğrulama Motoru</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            charcoal: {
+              950: '#07080a',
+              900: '#0c0e12',
+              850: '#12151c',
+              800: '#171b24',
+              700: '#232936',
+              600: '#323a4d'
+            },
+            emerald: {
+              400: '#34d399',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Menlo', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0c0e12; }
+    ::-webkit-scrollbar-thumb { background: #232936; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #10b981; }
+  </style>
+</head>
+<body class="bg-charcoal-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-emerald-500/30 selection:text-emerald-300 pb-16">
+
+  <!-- Toast Bildirim Alanı -->
+  <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-6">
+
+    <!-- ÜST BAŞLIK -->
+    <header class="text-center mb-6">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold tracking-wider uppercase mb-2">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        Doğrulanmış Yanıt Ayrıştırıcı v3.2
+      </div>
+      <h1 class="text-3xl sm:text-5xl font-black tracking-tight text-white uppercase">
+        INSTAGRAM <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-200">USERNAME HUNTER</span>
+      </h1>
+      <p class="mt-1.5 text-xs sm:text-sm text-slate-400 max-w-2xl mx-auto">
+        Kullanıcı adları Instagram kayıt protokolü üzerinden sırayla test edilir. Gerçek HTTP yanıtı ve JSON hata kodları canlı olarak ayrıştırılır.
+      </p>
+    </header>
+
+    <!-- TEŞHİS VE CANLI TEST LABORATUVARI (3 ZORUNLU SENARYO) -->
+    <section class="bg-charcoal-900 border border-emerald-500/30 rounded-2xl p-4 sm:p-5 mb-6 shadow-2xl relative">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-charcoal-700/60 pb-3 mb-4 gap-2">
+        <div>
+          <h2 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+            </svg>
+            Protokol Doğrulama ve Teşhis Laboratuvarı
+          </h2>
+          <p class="text-[11px] text-slate-400">Önceden belirlenen 3 örnekle motorun HTTP ve JSON yanıt ayrıştırma kabiliyetini sınayın.</p>
+        </div>
+
+        <button onclick="runDiagnosticSuite()" id="diag-btn" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-charcoal-950 text-xs font-bold rounded-xl transition flex items-center gap-1.5 shrink-0 self-start sm:self-auto">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+          </svg>
+          <span>3 Örnekli Teşhis Testini Çalıştır</span>
+        </button>
+      </div>
+
+      <!-- Teşhis Çıktı Tablosu -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div id="diag-card-taken" class="bg-charcoal-850 border border-charcoal-700/60 rounded-xl p-3 text-xs">
+          <div class="flex items-center justify-between mb-1">
+            <span class="font-bold text-slate-300">1. Alınmış Örnek</span>
+            <span class="text-slate-500 font-mono text-[10px]" id="diag-status-1">Bekliyor</span>
+          </div>
+          <code class="text-white font-mono block text-[11px] mb-1">@instagram</code>
+          <div class="text-[11px] text-slate-400 bg-charcoal-900/80 p-2 rounded border border-charcoal-800 font-mono h-20 overflow-y-auto" id="diag-res-1">
+            Test başlatılmadı...
+          </div>
+        </div>
+
+        <div id="diag-card-avail" class="bg-charcoal-850 border border-charcoal-700/60 rounded-xl p-3 text-xs">
+          <div class="flex items-center justify-between mb-1">
+            <span class="font-bold text-slate-300">2. Müsait Örnek</span>
+            <span class="text-slate-500 font-mono text-[10px]" id="diag-status-2">Bekliyor</span>
+          </div>
+          <code class="text-white font-mono block text-[11px] mb-1">@hunt_tst_avail_9821</code>
+          <div class="text-[11px] text-slate-400 bg-charcoal-900/80 p-2 rounded border border-charcoal-800 font-mono h-20 overflow-y-auto" id="diag-res-2">
+            Test başlatılmadı...
+          </div>
+        </div>
+
+        <div id="diag-card-rand" class="bg-charcoal-850 border border-charcoal-700/60 rounded-xl p-3 text-xs">
+          <div class="flex items-center justify-between mb-1">
+            <span class="font-bold text-slate-300">3. Rastgele Aday</span>
+            <span class="text-slate-500 font-mono text-[10px]" id="diag-status-3">Bekliyor</span>
+          </div>
+          <code class="text-white font-mono block text-[11px] mb-1" id="diag-rand-name">@rnd_candidate</code>
+          <div class="text-[11px] text-slate-400 bg-charcoal-900/80 p-2 rounded border border-charcoal-800 font-mono h-20 overflow-y-auto" id="diag-res-3">
+            Test başlatılmadı...
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MOTOR AYARLARI VE OTOMASYON PANELİ -->
+    <section class="bg-charcoal-900 border border-charcoal-700/60 rounded-2xl p-4 sm:p-6 mb-6 shadow-2xl">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-charcoal-700/60 pb-3 mb-4 gap-2">
+        <h2 class="text-base font-bold text-white flex items-center gap-2">
+          <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+          </svg>
+          Otomatik Avcı ve Sıralı Denetleyici
+        </h2>
+        <span id="engine-live-badge" class="text-xs px-2.5 py-1 rounded-full bg-charcoal-800 border border-charcoal-700 text-slate-400 font-mono">
+          Motor Durumu: Hazır
+        </span>
+      </div>
+
+      <div class="space-y-4">
+        <!-- 1. Uzunluk Seçimi -->
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Hedef Karakter Uzunlukları</label>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono text-xs">
+            <label class="flex items-center justify-center p-2.5 rounded-xl border border-charcoal-700 bg-charcoal-850 cursor-pointer has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-500/10 has-[:checked]:text-emerald-300">
+              <input type="checkbox" name="len" value="2" class="sr-only len-cb" checked>
+              <span class="font-bold">2 Karakter</span>
+            </label>
+            <label class="flex items-center justify-center p-2.5 rounded-xl border border-charcoal-700 bg-charcoal-850 cursor-pointer has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-500/10 has-[:checked]:text-emerald-300">
+              <input type="checkbox" name="len" value="3" class="sr-only len-cb" checked>
+              <span class="font-bold">3 Karakter</span>
+            </label>
+            <label class="flex items-center justify-center p-2.5 rounded-xl border border-charcoal-700 bg-charcoal-850 cursor-pointer has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-500/10 has-[:checked]:text-emerald-300">
+              <input type="checkbox" name="len" value="4" class="sr-only len-cb" checked>
+              <span class="font-bold">4 Karakter</span>
+            </label>
+            <label class="flex items-center justify-center p-2.5 rounded-xl border border-charcoal-700 bg-charcoal-850 cursor-pointer has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-500/10 has-[:checked]:text-emerald-300">
+              <input type="checkbox" name="len" value="5" class="sr-only len-cb">
+              <span class="font-bold">5 Karakter</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 2. Karakter Türleri & Bağlantı Modu -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Karakter Havuzu</label>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <label class="flex items-center gap-2 p-2 rounded-lg border border-charcoal-700 bg-charcoal-850 cursor-pointer has-[:checked]:border-emerald-500/60">
+                <input type="checkbox" id="char-a" checked class="w-3.5 h-3.5 rounded text-emerald-500 bg-charcoal-800">
+                <span>Harfler (a-z)</span>
+              </label>
+              <label class="flex items-center gap-2 p-2 rounded-lg border border-charcoal-700 bg-charcoal-850 cursor-pointer has-[:checked]:border-emerald-500/60">
+                <input type="checkbox" id="char-n" checked class="w-3.5 h-3.5 rounded text-emerald-500 bg-charcoal-800">
+                <span>Rakamlar (0-9)</span>
+              </label>
+              <label class="flex items-center gap-2 p-2 rounded-lg border border-charcoal-700 bg-charcoal-850 cursor-pointer has-[:checked]:border-emerald-500/60">
+                <input type="checkbox" id="char-d" class="w-3.5 h-3.5 rounded text-emerald-500 bg-charcoal-800">
+                <span>Nokta (.)</span>
+              </label>
+              <label class="flex items-center gap-2 p-2 rounded-lg border border-charcoal-700 bg-charcoal-850 cursor-pointer has-[:checked]:border-emerald-500/60">
+                <input type="checkbox" id="char-u" class="w-3.5 h-3.5 rounded text-emerald-500 bg-charcoal-800">
+                <span>Alt Çizgi (_)</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Ağ Bağlantı Modu -->
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Ağ Erişim Modu (CORS Çözücü)</label>
+            <select id="network-mode" class="w-full bg-charcoal-850 border border-charcoal-700 rounded-lg px-3 py-2 text-xs font-medium text-slate-200 focus:outline-none focus:border-emerald-500">
+              <option value="RELAY_CORS_IO" selected>Köprü 1: corsproxy.io (Önerilen / CORS Aşma)</option>
+              <option value="RELAY_ALLORIGINS">Köprü 2: allorigins.win (Yedek Köprü)</option>
+              <option value="DIRECT">Doğrudan İstek (CORS Kısıtlı - Sadece Eklenti Varsa)</option>
+            </select>
+            <p class="text-[10px] text-slate-500 mt-1">
+              Köprü modu, tarayıcının yerel CORS kısıtlamasını aşarak Instagram'ın gerçek ham JSON yanıtını JavaScript'e ulaştırır.
+            </p>
+          </div>
+        </div>
+
+        <!-- 3. Hız ve Kontroller -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end pt-2">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Parti Büyüklüğü</label>
+            <select id="batch-qty" class="w-full bg-charcoal-850 border border-charcoal-700 rounded-lg px-3 py-2.5 text-xs font-semibold text-white">
+              <option value="10">10 Aday</option>
+              <option value="25" selected>25 Aday</option>
+              <option value="50">50 Aday</option>
+            </select>
+          </div>
+
+          <div class="sm:col-span-2 flex gap-2">
+            <button type="button" id="start-btn" onclick="startHunter()" class="flex-1 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-charcoal-950 font-bold py-2.5 px-4 rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center justify-center gap-2 text-xs sm:text-sm">
+              <svg class="w-4 h-4 text-charcoal-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+              </svg>
+              <span>Gerçek Kontrolü Başlat</span>
+            </button>
+
+            <button type="button" id="pause-btn" onclick="pauseHunter()" disabled class="px-4 py-2.5 bg-charcoal-850 hover:bg-charcoal-800 border border-charcoal-700 text-slate-400 rounded-xl text-xs font-bold transition disabled:opacity-40">
+              Durdur
+            </button>
+          </div>
+        </div>
+
+        <!-- İlerleme Barı -->
+        <div id="progress-box" class="hidden bg-charcoal-850 border border-charcoal-700/60 rounded-xl p-3">
+          <div class="flex justify-between text-xs mb-1 font-mono">
+            <span class="text-slate-300">Sorgulanan: <span id="progress-user" class="text-emerald-400 font-bold">...</span></span>
+            <span id="progress-pct" class="text-slate-400">0%</span>
+          </div>
+          <div class="w-full bg-charcoal-800 rounded-full h-1.5 overflow-hidden">
+            <div id="progress-bar" class="bg-emerald-500 h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- METRİK DASHBOARD (AYRIŞTIRILMIŞ TÜM DURUMLAR) -->
+    <section class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+      <div class="bg-charcoal-900 border border-charcoal-700/60 rounded-xl p-3">
+        <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide block">Toplam İncelenen</span>
+        <div class="flex items-baseline justify-between mt-1">
+          <span id="stat-total" class="text-xl sm:text-2xl font-black font-mono text-white">0</span>
+          <span class="text-xs text-slate-400">Aday</span>
+        </div>
+      </div>
+
+      <div class="bg-charcoal-900 border border-emerald-500/40 rounded-xl p-3 bg-emerald-500/[0.03]">
+        <span class="text-[10px] font-semibold text-emerald-400 uppercase tracking-wide block">AVAILABLE (Boşta)</span>
+        <div class="flex items-baseline justify-between mt-1">
+          <span id="stat-avail" class="text-xl sm:text-2xl font-black font-mono text-emerald-400">0</span>
+          <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-1 py-0.5 rounded font-mono font-bold">ONAYLI</span>
+        </div>
+      </div>
+
+      <div class="bg-charcoal-900 border border-red-500/40 rounded-xl p-3 bg-red-500/[0.03]">
+        <span class="text-[10px] font-semibold text-red-400 uppercase tracking-wide block">TAKEN (Dolu)</span>
+        <div class="flex items-baseline justify-between mt-1">
+          <span id="stat-taken" class="text-xl sm:text-2xl font-black font-mono text-red-400">0</span>
+          <span class="text-[10px] bg-red-500/20 text-red-300 px-1 py-0.5 rounded font-mono font-bold">ALINMIŞ</span>
+        </div>
+      </div>
+
+      <div class="bg-charcoal-900 border border-amber-500/40 rounded-xl p-3 bg-amber-500/[0.03]">
+        <span class="text-[10px] font-semibold text-amber-400 uppercase tracking-wide block">Engelli / Sınır (429/CORS)</span>
+        <div class="flex items-baseline justify-between mt-1">
+          <span id="stat-blocked" class="text-xl sm:text-2xl font-black font-mono text-amber-300">0</span>
+          <span class="text-[10px] bg-amber-500/20 text-amber-300 px-1 py-0.5 rounded font-mono font-bold">SINIR</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- TABLO VE FİLTRELEME -->
+    <section class="bg-charcoal-900 border border-charcoal-700/60 rounded-2xl overflow-hidden shadow-2xl">
+      <div class="p-3 bg-charcoal-850/80 border-b border-charcoal-700/60 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold text-white uppercase tracking-wider">Sonuçlar</span>
+          <span id="count-badge" class="text-[10px] bg-charcoal-700 text-slate-300 font-mono px-2 py-0.5 rounded-full">0</span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <select id="filter-status" onchange="renderTable()" class="bg-charcoal-800 border border-charcoal-700 text-xs text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none">
+            <option value="ALL">Tüm Durumlar</option>
+            <option value="AVAILABLE">Yalnızca AVAILABLE (Boşta)</option>
+            <option value="TAKEN">Yalnızca TAKEN (Dolu)</option>
+            <option value="BLOCKED">Engeller (429 / CAPTCHA / CORS)</option>
+            <option value="FAV">Yalnızca Favoriler</option>
+          </select>
+
+          <button onclick="exportCSV()" class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded-lg text-xs font-bold transition hover:bg-emerald-500/20">
+            CSV İndir
+          </button>
+
+          <button onclick="clearList()" class="text-slate-400 hover:text-red-400 text-xs px-2 py-1 transition">
+            Temizle
+          </button>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="border-b border-charcoal-700/60 bg-charcoal-950/40 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              <th class="py-2.5 px-3 w-10 text-center">Fav</th>
+              <th class="py-2.5 px-3">Kullanıcı Adı</th>
+              <th class="py-2.5 px-2 text-center">Uzunluk</th>
+              <th class="py-2.5 px-3">Doğrulanan Durum</th>
+              <th class="py-2.5 px-3">HTTP Durumu & JSON Hata Kodu</th>
+              <th class="py-2.5 px-2 text-center">Profil</th>
+              <th class="py-2.5 px-2 text-center">Kopyala</th>
+            </tr>
+          </thead>
+          <tbody id="table-body" class="divide-y divide-charcoal-700/40 font-mono">
+            <!-- Dinamik doldurulur -->
+          </tbody>
+        </table>
+      </div>
+
+      <div id="table-empty" class="py-12 text-center text-slate-500 text-xs">
+        Henüz bir denetim yapılmadı. Yukarıdaki "3 Örnekli Teşhis Testi"ni veya "Gerçek Kontrolü Başlat" butonunu çalıştırın.
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    // --- GLOBAL HAFIZA VE SABİTLER ---
+    const STORAGE_KEY = 'INSTA_HUNTER_V3_2';
+    let resultsList = [];
+    const verifiedHistory = new Set();
+    let isRunning = false;
+    let abortController = null;
+
+    const CHARS_A = 'abcdefghijklmnopqrstuvwxyz'.split('');
+    const CHARS_N = '0123456789'.split('');
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadStorage();
+      updateDashboard();
+      renderTable();
+    });
+
+    function saveStorage() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(resultsList)); } catch (e) {}
+    }
+
+    function loadStorage() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          resultsList = JSON.parse(raw);
+          resultsList.forEach(r => verifiedHistory.add(r.username.toLowerCase()));
+        }
+      } catch (e) { resultsList = []; }
+    }
+
+    // --- TEMEL AĞ İSTEĞİ: GERÇEK INSTAGRAM YANIT AYRIŞTIRICI ---
+    async function queryInstagramEndpoint(username, signal) {
+      const endpoint = 'https://www.instagram.com/api/v1/web/accounts/web_create_ajax/attempt/';
+      const postBody = new URLSearchParams({
+        email: `hunter_${Math.random().toString(36).substring(2, 7)}@gmail.com`,
+        username: username,
+        first_name: '',
+        opt_into_one_tap: 'false'
+      }).toString();
+
+      const netMode = document.getElementById('network-mode').value;
+      let targetUrl = endpoint;
+
+      // CORS Köprü Yönlendirmeleri
+      if (netMode === 'RELAY_CORS_IO') {
+        targetUrl = 'https://corsproxy.io/?' + encodeURIComponent(endpoint);
+      } else if (netMode === 'RELAY_ALLORIGINS') {
+        targetUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(endpoint);
+      }
+
+      const headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-IG-App-ID': '936619743392459'
+      };
+
+      try {
+        const res = await fetch(targetUrl, {
+          method: 'POST',
+          headers: headers,
+          body: postBody,
+          signal: signal
+        });
+
+        const httpCode = res.status;
+
+        // 1. HTTP 429: Rate-Limit (Hız sınırı aşıldı)
+        if (httpCode === 429) {
+          return {
+            status: 'RATE_LIMIT_429',
+            code: 429,
+            detail: 'HTTP 429 Too Many Requests (Instagram IP Hız Sınırı Tetiklendi)',
+            isCritical: true,
+            raw: { error: 'rate_limited', status: 429 }
+          };
+        }
+
+        // 2. HTTP 403 / 400: Güvenlik / Oturum / CAPTCHA
+        if (httpCode === 403 || httpCode === 401) {
+          return {
+            status: 'CAPTCHA_BLOCKED',
+            code: httpCode,
+            detail: `HTTP ${httpCode} (Erişim Reddedildi / Checkpoint)`,
+            isCritical: true,
+            raw: { status: httpCode }
+          };
+        }
+
+        let data = null;
+        try {
+          data = await res.json();
+        } catch (jsonErr) {
+          return {
+            status: 'UNKNOWN',
+            code: httpCode,
+            detail: `JSON Okunamadı (HTTP ${httpCode})`,
+            isCritical: false,
+            raw: null
+          };
+        }
+
+        // 3. Instagram JSON Gövdesini Analiz Et
+        // A) CAPTCHA veya Oturum Engeli
+        if (data.message === 'checkpoint_required' || data.feedback_required) {
+          return {
+            status: 'CAPTCHA_BLOCKED',
+            code: httpCode,
+            detail: 'checkpoint_required (CAPTCHA Doğrulaması İstendi)',
+            isCritical: true,
+            raw: data
+          };
+        }
+
+        // B) Hata Alanı: Kullanıcı Adı Dolu mu?
+        if (data.errors && data.errors.username) {
+          const firstErr = data.errors.username[0] || {};
+          const errCode = firstErr.code || 'taken';
+          const errMsg = firstErr.message || 'Kullanıcı adı kullanımda.';
+
+          return {
+            status: 'TAKEN',
+            code: httpCode,
+            detail: `HATA: [${errCode}] ${errMsg}`,
+            isCritical: false,
+            raw: data
+          };
+        }
+
+        // C) Müsaitlik Onayı (dryrun: true ve hata nesnesi YOK)
+        if (data.status === 'ok' && !data.errors) {
+          return {
+            status: 'AVAILABLE',
+            code: httpCode,
+            detail: 'Instagram Onayladı: "dryrun: true" (Kullanıcı Adı Boşta)',
+            isCritical: false,
+            raw: data
+          };
+        }
+
+        // D) Beklenmeyen format
+        return {
+          status: 'UNKNOWN',
+          code: httpCode,
+          detail: `Bilinmeyen Yanıt Formatı: ${JSON.stringify(data).substring(0, 45)}...`,
+          isCritical: false,
+          raw: data
+        };
+
+      } catch (err) {
+        if (err.name === 'AbortError') throw err;
+
+        return {
+          status: 'CORS_ERROR',
+          code: 0,
+          detail: 'Tarayıcı CORS / Bağlantı Hatası (Köprü modunu kontrol edin)',
+          isCritical: false,
+          raw: null
+        };
+      }
+    }
+
+    // --- TEŞHİS LABORATUVARI (3 ZORUNLU ÖRNEK TESTİ) ---
+    async function runDiagnosticSuite() {
+      const btn = document.getElementById('diag-btn');
+      btn.disabled = true;
+      btn.innerHTML = `<span class="animate-spin mr-1">⏳</span> Test Ediliyor...`;
+
+      // 1. Örnek: Bilinen Alınmış
+      const takenUser = 'instagram';
+      document.getElementById('diag-status-1').textContent = 'Sorgulanıyor...';
+      const res1 = await queryInstagramEndpoint(takenUser);
+      document.getElementById('diag-status-1').textContent = res1.status;
+      document.getElementById('diag-status-1').className = res1.status === 'TAKEN' ? 'text-red-400 font-bold' : 'text-amber-400';
+      document.getElementById('diag-res-1').textContent = `HTTP: ${res1.code}\nDurum: ${res1.status}\nDetay: ${res1.detail}`;
+
+      // 2. Örnek: Bilinen Müsait (Çok uzun karmaşık benzersiz ad)
+      const availUser = `hunt_avail_${Math.random().toString(36).substring(2, 7)}_${Date.now().toString().slice(-4)}`;
+      document.getElementById('diag-status-2').textContent = 'Sorgulanıyor...';
+      const res2 = await queryInstagramEndpoint(availUser);
+      document.getElementById('diag-status-2').textContent = res2.status;
+      document.getElementById('diag-status-2').className = res2.status === 'AVAILABLE' ? 'text-emerald-400 font-bold' : 'text-amber-400';
+      document.getElementById('diag-res-2').textContent = `HTTP: ${res2.code}\nDurum: ${res2.status}\nDetay: ${res2.detail}`;
+
+      // 3. Örnek: Rastgele Kısa Aday
+      const randUser = 'k' + Math.random().toString(36).substring(2, 5);
+      document.getElementById('diag-rand-name').textContent = `@${randUser}`;
+      document.getElementById('diag-status-3').textContent = 'Sorgulanıyor...';
+      const res3 = await queryInstagramEndpoint(randUser);
+      document.getElementById('diag-status-3').textContent = res3.status;
+      document.getElementById('diag-status-3').className = res3.status === 'AVAILABLE' ? 'text-emerald-400 font-bold' : 'text-red-400 font-bold';
+      document.getElementById('diag-res-3').textContent = `HTTP: ${res3.code}\nDurum: ${res3.status}\nDetay: ${res3.detail}`;
+
+      btn.disabled = false;
+      btn.innerHTML = `<span>Teşhis Testini Tekrar Çalıştır</span>`;
+      showToast('3 Teşhis testi tamamlandı. Gerçek yanıtlar incelendi.', 'info');
+    }
+
+    // --- OTOMATİK KULLANICI ADI ÜRETİCİ ---
+    function generateCandidate(lengths, pool) {
+      const len = lengths[Math.floor(Math.random() * lengths.length)];
+      let u = '';
+      const alphaPool = pool.filter(c => c !== '.' && c !== '_');
+      u += alphaPool[Math.floor(Math.random() * alphaPool.length)];
+
+      for (let i = 1; i < len; i++) {
+        const isEnd = (i === len - 1);
+        let curr = [...pool];
+        if (isEnd || u[u.length - 1] === '.') curr = curr.filter(c => c !== '.');
+        u += curr[Math.floor(Math.random() * curr.length)];
+      }
+      return u.toLowerCase();
+    }
+
+    // --- ANA OTOMASYON MOTORU ---
+    async function startHunter() {
+      if (isRunning) return;
+
+      const lengths = Array.from(document.querySelectorAll('.len-cb:checked')).map(c => parseInt(c.value));
+      if (lengths.length === 0) {
+        showToast('En az bir uzunluk seçin!', 'error');
+        return;
+      }
+
+      let pool = [];
+      if (document.getElementById('char-a').checked) pool = pool.concat(CHARS_A);
+      if (document.getElementById('char-n').checked) pool = pool.concat(CHARS_N);
+      if (document.getElementById('char-d').checked) pool.push('.');
+      if (document.getElementById('char-u').checked) pool.push('_');
+
+      if (pool.length === 0) {
+        showToast('Karakter havuzu boş olamaz!', 'error');
+        return;
+      }
+
+      const batchQty = parseInt(document.getElementById('batch-qty').value, 10);
+
+      // Adayları önceden üret (Mükerrer engelleme)
+      const queue = [];
+      let tries = 0;
+      while (queue.length < batchQty && tries < batchQty * 150) {
+        tries++;
+        const cand = generateCandidate(lengths, pool);
+        if (!verifiedHistory.has(cand) && !queue.includes(cand)) {
+          queue.push(cand);
+        }
+      }
+
+      if (queue.length === 0) {
+        showToast('Yeni aday üretilemedi.', 'warning');
+        return;
+      }
+
+      isRunning = true;
+      abortController = new AbortController();
+
+      document.getElementById('start-btn').disabled = true;
+      document.getElementById('pause-btn').disabled = false;
+      document.getElementById('progress-box').classList.remove('hidden');
+      document.getElementById('engine-live-badge').innerHTML = `<span class="text-emerald-400 font-bold">● Aktif Taranıyor</span>`;
+
+      let processed = 0;
+
+      for (const username of queue) {
+        if (!isRunning) break;
+
+        document.getElementById('progress-user').textContent = `@${username}`;
+        const pct = Math.round((processed / queue.length) * 100);
+        document.getElementById('progress-bar').style.width = `${pct}%`;
+        document.getElementById('progress-pct').textContent = `${pct}%`;
+
+        try {
+          const outcome = await queryInstagramEndpoint(username, abortController.signal);
+          verifiedHistory.add(username);
+
+          const record = {
+            id: 'un_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+            username: username,
+            length: username.length,
+            status: outcome.status,
+            detail: outcome.detail,
+            code: outcome.code,
+            isFav: outcome.status === 'AVAILABLE',
+            date: Date.now()
+          };
+
+          resultsList.unshift(record);
+          saveStorage();
+          updateDashboard();
+          renderTable();
+
+          if (outcome.status === 'AVAILABLE') {
+            showToast(`🔥 BOŞTA KULLANICI ADI BULUNDU: @${username}`, 'success');
+          }
+
+          // Kritik Durumlarda (429 / CAPTCHA) Motoru Otomatik Durdur
+          if (outcome.isCritical) {
+            showToast(`Kritik Kısıtlama: ${outcome.detail}. İşlem duraklatıldı.`, 'error');
+            pauseHunter();
+            break;
+          }
+
+          processed++;
+          // Tek IP koruması için 2.5 saniye bekle
+          await new Promise(r => setTimeout(r, 2500));
+
+        } catch (e) {
+          if (e.name === 'AbortError') break;
+        }
+      }
+
+      if (isRunning) {
+        document.getElementById('progress-bar').style.width = '100%';
+        document.getElementById('progress-pct').textContent = '100%';
+        showToast('Parti denetimi bitti.', 'info');
+        pauseHunter();
+      }
+    }
+
+    function pauseHunter() {
+      isRunning = false;
+      if (abortController) {
+        abortController.abort();
+        abortController = null;
+      }
+      document.getElementById('start-btn').disabled = false;
+      document.getElementById('pause-btn').disabled = true;
+      document.getElementById('engine-live-badge').innerHTML = `<span class="text-slate-400">Motor: Duraklatıldı</span>`;
+    }
+
+    // --- TABLO VE DASHBOARD GÜNCELLEME ---
+    function updateDashboard() {
+      const total = resultsList.length;
+      const avail = resultsList.filter(r => r.status === 'AVAILABLE').length;
+      const taken = resultsList.filter(r => r.status === 'TAKEN').length;
+      const blocked = resultsList.filter(r => r.status === 'RATE_LIMIT_429' || r.status === 'CAPTCHA_BLOCKED' || r.status === 'CORS_ERROR').length;
+
+      document.getElementById('stat-total').textContent = total;
+      document.getElementById('stat-avail').textContent = avail;
+      document.getElementById('stat-taken').textContent = taken;
+      document.getElementById('stat-blocked').textContent = blocked;
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('table-body');
+      const empty = document.getElementById('table-empty');
+      const filter = document.getElementById('filter-status').value;
+
+      let list = [...resultsList];
+
+      if (filter === 'AVAILABLE') list = list.filter(r => r.status === 'AVAILABLE');
+      else if (filter === 'TAKEN') list = list.filter(r => r.status === 'TAKEN');
+      else if (filter === 'BLOCKED') list = list.filter(r => r.status !== 'AVAILABLE' && r.status !== 'TAKEN');
+      else if (filter === 'FAV') list = list.filter(r => r.isFav);
+
+      document.getElementById('count-badge').textContent = `${list.length} Kayıt`;
+
+      if (list.length === 0) {
+        tbody.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+
+      empty.classList.add('hidden');
+      tbody.innerHTML = list.map(item => {
+        let badge = '';
+        if (item.status === 'AVAILABLE') {
+          badge = '<span class="px-2 py-0.5 rounded font-black text-[11px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">AVAILABLE</span>';
+        } else if (item.status === 'TAKEN') {
+          badge = '<span class="px-2 py-0.5 rounded font-bold text-[11px] bg-red-500/20 text-red-400 border border-red-500/40">TAKEN</span>';
+        } else if (item.status === 'RATE_LIMIT_429') {
+          badge = '<span class="px-2 py-0.5 rounded font-bold text-[11px] bg-amber-500/20 text-amber-300 border border-amber-500/40">RATE LIMIT 429</span>';
+        } else if (item.status === 'CAPTCHA_BLOCKED') {
+          badge = '<span class="px-2 py-0.5 rounded font-bold text-[11px] bg-rose-500/20 text-rose-300 border border-rose-500/40">CAPTCHA</span>';
+        } else {
+          badge = '<span class="px-2 py-0.5 rounded font-bold text-[11px] bg-charcoal-700 text-slate-300">CORS/UNKNOWN</span>';
+        }
+
+        const favColor = item.isFav ? 'text-amber-400 fill-amber-400' : 'text-slate-600 hover:text-amber-400';
+
+        return `
+          <tr class="hover:bg-charcoal-850/60 transition">
+            <td class="py-2 px-3 text-center">
+              <button onclick="toggleFav('${item.id}')" class="p-1">
+                <svg class="w-4 h-4 ${favColor}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                </svg>
+              </button>
+            </td>
+            <td class="py-2 px-3 font-bold text-white">@${item.username}</td>
+            <td class="py-2 px-2 text-center text-slate-400">${item.length}k</td>
+            <td class="py-2 px-3">${badge}</td>
+            <td class="py-2 px-3 text-slate-400 text-[11px] truncate max-w-xs" title="${item.detail}">
+              ${item.detail}
+            </td>
+            <td class="py-2 px-2 text-center">
+              <a href="https://instagram.com/${item.username}/" target="_blank" class="text-slate-400 hover:text-emerald-400">↗</a>
+            </td>
+            <td class="py-2 px-2 text-center">
+              <button onclick="navigator.clipboard.writeText('${item.username}'); showToast('Kopyalandı', 'info')" class="text-slate-400 hover:text-white">📋</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function toggleFav(id) {
+      const itm = resultsList.find(x => x.id === id);
+      if (itm) {
+        itm.isFav = !itm.isFav;
+        saveStorage();
+        renderTable();
+      }
+    }
+
+    function clearList() {
+      if (confirm('Tüm kayıtlar silinsin mi?')) {
+        resultsList = [];
+        verifiedHistory.clear();
+        saveStorage();
+        updateDashboard();
+        renderTable();
+      }
+    }
+
+    function exportCSV() {
+      if (resultsList.length === 0) return;
+      const headers = ['Kullanici_Adi', 'Uzunluk', 'Durum', 'Detay'];
+      const rows = resultsList.map(r => [r.username, r.length, r.status, `"${r.detail}"`]);
+      const csv = [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `instagram_hunter_${Date.now()}.csv`;
+      a.click();
+    }
+
+    function showToast(msg, type = 'info') {
+      const c = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      el.className = `border px-3 py-2 rounded-xl shadow-xl text-xs font-semibold bg-charcoal-900 ${type === 'success' ? 'border-emerald-500 text-emerald-300' : (type === 'error' ? 'border-red-500 text-red-300' : 'border-charcoal-700 text-slate-200')}`;
+      el.textContent = msg;
+      c.appendChild(el);
+      setTimeout(() => el.remove(), 3500);
+    }
+  </script>
+</body>
+</html>
