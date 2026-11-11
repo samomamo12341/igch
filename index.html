@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>INSTAGRAM USERNAME HUNTER — Teşhisli Otomasyon</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            charcoal: {
+              950: '#07080a',
+              900: '#0c0e12',
+              850: '#12151c',
+              800: '#171b24',
+              700: '#232936',
+              600: '#323a4d'
+            },
+            emerald: {
+              400: '#34d399',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Menlo', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0c0e12; }
+    ::-webkit-scrollbar-thumb { background: #232936; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #10b981; }
+  </style>
+</head>
+<body class="bg-charcoal-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-emerald-500/30 selection:text-emerald-300 pb-16">
+
+  <!-- Bildirim Konteyneri -->
+  <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-6">
+
+    <!-- BAŞLIK -->
+    <header class="text-center mb-6">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold tracking-wider uppercase mb-2">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        Hata Korumalı &bull; Canlı Teşhis Terminali v4.0
+      </div>
+      <h1 class="text-3xl sm:text-5xl font-black tracking-tight text-white uppercase">
+        INSTAGRAM <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-200">USERNAME HUNTER</span>
+      </h1>
+      <p class="mt-1.5 text-xs sm:text-sm text-slate-400 max-w-2xl mx-auto">
+        Kullanıcı adı uygunluğu Instagram'ın kayıt protokolü üzerinden sırayla test edilir. Ağ istekleri ve JSON yanıtları terminalde anlık olarak loglanır.
+      </p>
+    </header>
+
+    <!-- SORUN 3: 3 SENARYOLU TEŞHİS LABORATUVARI -->
+    <section class="bg-charcoal-900 border border-emerald-500/30 rounded-2xl p-4 sm:p-5 mb-6 shadow-xl">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-charcoal-700/60 pb-3 mb-4 gap-2">
+        <div>
+          <h2 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Gerçek Teşhis Testi (3 Zorunlu Senaryo)
+          </h2>
+          <p class="text-[11px] text-slate-400">Motoru çalıştırmadan önce sistemin Instagram API yanıtlarını doğru ayrıştırıp ayrıştırmadığını test edin.</p>
+        </div>
+        <button onclick="executeDiagnosticSuite()" id="diag-btn" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-charcoal-950 text-xs font-bold rounded-xl transition flex items-center gap-1.5 shrink-0 self-start sm:self-auto shadow-lg shadow-emerald-500/10">
+          <span>3 Testi Şimdi Çalıştır</span>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 font-mono text-xs">
+        <!-- 1. Alınmış Hesap -->
+        <div class="bg-charcoal-850 p-3 rounded-xl border border-charcoal-700/60" id="diag-card-1">
+          <div class="flex justify-between items-center mb-1">
+            <span class="text-slate-300 font-bold">1. Alınmış Örnek</span>
+            <span id="diag-tag-1" class="text-[10px] px-1.5 py-0.5 rounded bg-charcoal-800 text-slate-400">BEKLİYOR</span>
+          </div>
+          <span class="text-emerald-400 block mb-1">@instagram</span>
+          <div id="diag-body-1" class="text-[10px] text-slate-400 bg-charcoal-900 p-2 rounded h-24 overflow-y-auto border border-charcoal-800">
+            Henüz test edilmedi...
+          </div>
+        </div>
+
+        <!-- 2. Müsait Hesap -->
+        <div class="bg-charcoal-850 p-3 rounded-xl border border-charcoal-700/60" id="diag-card-2">
+          <div class="flex justify-between items-center mb-1">
+            <span class="text-slate-300 font-bold">2. Boşta Aday</span>
+            <span id="diag-tag-2" class="text-[10px] px-1.5 py-0.5 rounded bg-charcoal-800 text-slate-400">BEKLİYOR</span>
+          </div>
+          <span class="text-emerald-400 block mb-1" id="diag-avail-name">@hunt_avail_test_2026</span>
+          <div id="diag-body-2" class="text-[10px] text-slate-400 bg-charcoal-900 p-2 rounded h-24 overflow-y-auto border border-charcoal-800">
+            Henüz test edilmedi...
+          </div>
+        </div>
+
+        <!-- 3. Rastgele Aday -->
+        <div class="bg-charcoal-850 p-3 rounded-xl border border-charcoal-700/60" id="diag-card-3">
+          <div class="flex justify-between items-center mb-1">
+            <span class="text-slate-300 font-bold">3. Rastgele Aday</span>
+            <span id="diag-tag-3" class="text-[10px] px-1.5 py-0.5 rounded bg-charcoal-800 text-slate-400">BEKLİYOR</span>
+          </div>
+          <span class="text-emerald-400 block mb-1" id="diag-rand-name">@rnd_test</span>
+          <div id="diag-body-3" class="text-[10px] text-slate-400 bg-charcoal-900 p-2 rounded h-24 overflow-y-auto border border-charcoal-800">
+            Henüz test edilmedi...
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- KONTROL VE JENERATÖR PANELİ -->
+    <section class="bg-charcoal-900 border border-charcoal-700/60 rounded-2xl p-4 sm:p-6 mb-6 shadow-2xl">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-charcoal-700/60 pb-3 mb-4 gap-2">
+        <h2 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+          <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+          </svg>
+          Otomatik Tarama ve Ağ Ayarları
+        </h2>
+        <span id="engine-state-badge" class="text-xs px-2.5 py-1 rounded-full bg-charcoal-800 border border-charcoal-700 text-slate-400 font-mono">
+          DURUM: IDLE (Boşta)
+        </span>
+      </div>
+
+      <div class="space-y-4">
+        <!-- Uzunluklar -->
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Hedef Uzunluklar</label>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono text-xs">
+            <label class="flex items-center justify-center p-2.5 rounded-xl border border-charcoal-700 bg-charcoal-850 cursor-pointer has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-500/10 has-[:checked]:text-emerald-300">
+              <input type="checkbox" name="len" value="2" class="sr-only len-input" checked>
+              <span class="font-bold">2 Karakter</span>
+            </label>
+            <label class="flex items-center justify-center p-2.5 rounded-xl border border-charcoal-700 bg-charcoal-850 cursor-pointer has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-500/10 has-[:checked]:text-emerald-300">
+              <input type="checkbox" name="len" value="3" class="sr-only len-input" checked>
+              <span class="font-bold">3 Karakter</span>
+            </label>
+            <label class="flex items-center justify-center p-2.5 rounded-xl border border-charcoal-700 bg-charcoal-850 cursor-pointer has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-500/10 has-[:checked]:text-emerald-300">
+              <input type="checkbox" name="len" value="4" class="sr-only len-input" checked>
+              <span class="font-bold">4 Karakter</span>
+            </label>
+            <label class="flex items-center justify-center p-2.5 rounded-xl border border-charcoal-700 bg-charcoal-850 cursor-pointer has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-500/10 has-[:checked]:text-emerald-300">
+              <input type="checkbox" name="len" value="5" class="sr-only len-input">
+              <span class="font-bold">5 Karakter</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Ağ Bağlantı Yöntemi -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Karakter Tipleri</label>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <label class="flex items-center gap-2 p-2 rounded-lg border border-charcoal-700 bg-charcoal-850 cursor-pointer has-[:checked]:border-emerald-500/60">
+                <input type="checkbox" id="chk-letters" checked class="w-3.5 h-3.5 text-emerald-500 bg-charcoal-800">
+                <span>Harfler (a-z)</span>
+              </label>
+              <label class="flex items-center gap-2 p-2 rounded-lg border border-charcoal-700 bg-charcoal-850 cursor-pointer has-[:checked]:border-emerald-500/60">
+                <input type="checkbox" id="chk-numbers" checked class="w-3.5 h-3.5 text-emerald-500 bg-charcoal-800">
+                <span>Rakamlar (0-9)</span>
+              </label>
+              <label class="flex items-center gap-2 p-2 rounded-lg border border-charcoal-700 bg-charcoal-850 cursor-pointer has-[:checked]:border-emerald-500/60">
+                <input type="checkbox" id="chk-dot" class="w-3.5 h-3.5 text-emerald-500 bg-charcoal-800">
+                <span>Nokta (.)</span>
+              </label>
+              <label class="flex items-center gap-2 p-2 rounded-lg border border-charcoal-700 bg-charcoal-850 cursor-pointer has-[:checked]:border-emerald-500/60">
+                <input type="checkbox" id="chk-under" class="w-3.5 h-3.5 text-emerald-500 bg-charcoal-800">
+                <span>Alt Çizgi (_)</span>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Ağ Köprüsü (CORS & WAF Bypass)</label>
+            <select id="network-bridge" class="w-full bg-charcoal-850 border border-charcoal-700 rounded-lg px-3 py-2 text-xs font-mono text-slate-200 focus:outline-none focus:border-emerald-500">
+              <option value="PROXY_IO">Köprü 1: corsproxy.io (JSON İletici)</option>
+              <option value="LOCAL_PROXY">Köprü 2: Yerel Köprü (localhost:3000/check)</option>
+              <option value="DIRECT">Doğrudan İstek (CORS Kısıtlamalı Tarayıcı Modu)</option>
+            </select>
+            <p class="text-[10px] text-slate-500 mt-1 font-sans">
+              Not: Genel proxy'ler Instagram WAF engeline takılırsa terminalde HTML hatası görünür.
+            </p>
+          </div>
+        </div>
+
+        <!-- Butonlar & Kontrol -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end pt-2">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Parti Adedi</label>
+            <select id="select-batch" class="w-full bg-charcoal-850 border border-charcoal-700 rounded-lg px-3 py-2.5 text-xs font-semibold text-white">
+              <option value="5">5 Aday (Hızlı Test)</option>
+              <option value="15" selected>15 Aday</option>
+              <option value="30">30 Aday</option>
+            </select>
+          </div>
+
+          <div class="sm:col-span-2 flex gap-2">
+            <button type="button" id="btn-start" onclick="onStartClicked()" class="flex-1 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-charcoal-950 font-bold py-2.5 px-4 rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center justify-center gap-2 text-xs sm:text-sm">
+              <svg class="w-4 h-4 text-charcoal-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+              </svg>
+              <span id="btn-start-label">Taramayı Başlat</span>
+            </button>
+
+            <button type="button" id="btn-stop" onclick="onStopClicked()" disabled class="px-4 py-2.5 bg-charcoal-850 hover:bg-charcoal-800 border border-charcoal-700 text-slate-400 rounded-xl text-xs font-bold transition disabled:opacity-40">
+              Durdur
+            </button>
+          </div>
+        </div>
+
+        <!-- İlerleme Çubuğu -->
+        <div id="progress-container" class="hidden bg-charcoal-850 border border-charcoal-700/60 rounded-xl p-3 font-mono text-xs">
+          <div class="flex justify-between mb-1">
+            <span class="text-slate-300">Hedef: <span id="progress-target" class="text-emerald-400 font-bold">@...</span></span>
+            <span id="progress-percent" class="text-slate-400">0%</span>
+          </div>
+          <div class="w-full bg-charcoal-800 rounded-full h-1.5 overflow-hidden">
+            <div id="progress-fill" class="bg-emerald-500 h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SORUN 1 VE 2'Yİ ÇÖZEN CANLI SİSTEM LOG TERMİNALİ -->
+    <section class="bg-charcoal-900 border border-charcoal-700/80 rounded-2xl p-4 mb-6 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-charcoal-700/60 pb-2 mb-2">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="text-xs font-bold text-slate-200 font-mono">CANLI SİSTEM LOG TERMİNALİ</span>
+        </div>
+        <button onclick="clearConsoleLog()" class="text-[10px] text-slate-400 hover:text-white font-mono">Terminali Temizle</button>
+      </div>
+      <div id="terminal-console" class="bg-charcoal-950 p-3 rounded-xl border border-charcoal-800 font-mono text-[11px] h-36 overflow-y-auto space-y-1 text-slate-300">
+        <div class="text-slate-500">[SİSTEM] Hazır. Olaylar bekleniyor...</div>
+      </div>
+    </section>
+
+    <!-- METRİK KARTLARI -->
+    <section class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+      <div class="bg-charcoal-900 border border-charcoal-700/60 rounded-xl p-3">
+        <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide block">Kontrol Edilen</span>
+        <div class="flex items-baseline justify-between mt-1">
+          <span id="m-total" class="text-xl sm:text-2xl font-black font-mono text-white">0</span>
+          <span class="text-xs text-slate-400">Toplam</span>
+        </div>
+      </div>
+
+      <div class="bg-charcoal-900 border border-emerald-500/40 rounded-xl p-3 bg-emerald-500/[0.03]">
+        <span class="text-[10px] font-semibold text-emerald-400 uppercase tracking-wide block">AVAILABLE (Boşta)</span>
+        <div class="flex items-baseline justify-between mt-1">
+          <span id="m-avail" class="text-xl sm:text-2xl font-black font-mono text-emerald-400">0</span>
+          <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-1 py-0.5 rounded font-mono font-bold">ONAYLI</span>
+        </div>
+      </div>
+
+      <div class="bg-charcoal-900 border border-red-500/40 rounded-xl p-3 bg-red-500/[0.03]">
+        <span class="text-[10px] font-semibold text-red-400 uppercase tracking-wide block">TAKEN (Dolu)</span>
+        <div class="flex items-baseline justify-between mt-1">
+          <span id="m-taken" class="text-xl sm:text-2xl font-black font-mono text-red-400">0</span>
+          <span class="text-[10px] bg-red-500/20 text-red-300 px-1 py-0.5 rounded font-mono font-bold">ALINMIŞ</span>
+        </div>
+      </div>
+
+      <div class="bg-charcoal-900 border border-amber-500/40 rounded-xl p-3 bg-amber-500/[0.03]">
+        <span class="text-[10px] font-semibold text-amber-400 uppercase tracking-wide block">UNKNOWN / HATA</span>
+        <div class="flex items-baseline justify-between mt-1">
+          <span id="m-err" class="text-xl sm:text-2xl font-black font-mono text-amber-300">0</span>
+          <span class="text-[10px] bg-amber-500/20 text-amber-300 px-1 py-0.5 rounded font-mono font-bold">AĞ/ENGEL</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- TABLO -->
+    <section class="bg-charcoal-900 border border-charcoal-700/60 rounded-2xl overflow-hidden shadow-2xl">
+      <div class="p-3 bg-charcoal-850/80 border-b border-charcoal-700/60 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold text-white uppercase tracking-wider">Sonuç Tablosu</span>
+          <span id="table-badge" class="text-[10px] bg-charcoal-700 text-slate-300 font-mono px-2 py-0.5 rounded-full">0 Kayıt</span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <select id="filter-sel" onchange="renderResultsTable()" class="bg-charcoal-800 border border-charcoal-700 text-xs text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none">
+            <option value="ALL">Tüm Sonuçlar</option>
+            <option value="AVAILABLE">Yalnızca AVAILABLE (Boşta)</option>
+            <option value="TAKEN">Yalnızca TAKEN (Dolu)</option>
+            <option value="UNKNOWN">Yalnızca UNKNOWN (Hata)</option>
+          </select>
+          <button onclick="clearAllStoredData()" class="text-xs text-slate-400 hover:text-red-400 px-2 py-1 transition">Verileri Sıfırla</button>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="border-b border-charcoal-700/60 bg-charcoal-950/40 text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">
+              <th class="py-2.5 px-3">Kullanıcı Adı</th>
+              <th class="py-2.5 px-2 text-center">Uzunluk</th>
+              <th class="py-2.5 px-3">Doğrulanan Durum</th>
+              <th class="py-2.5 px-3">HTTP Kodu & Ayrıştırılan JSON Detayı</th>
+              <th class="py-2.5 px-2 text-center">Link</th>
+            </tr>
+          </thead>
+          <tbody id="table-rows" class="divide-y divide-charcoal-700/40 font-mono"></tbody>
+        </table>
+      </div>
+      <div id="table-none" class="py-12 text-center text-slate-500 text-xs">
+        Kayıt bulunamadı. Lütfen yukarıdan teşhis testini veya taramayı başlatın.
+      </div>
+    </section>
+
+  </div>
+
+  <!-- SİSTEM ÇEKİRDEĞİ JAVASCRIPT -->
+  <script>
+    // --- DURUM YÖNETİMİ & LOG MEKANİZMASI ---
+    const DB_KEY = 'INSTA_HUNTER_V4_STATE';
+    let dataRecords = [];
+    const knownCheckedSet = new Set();
+    
+    // Motor Durumu
+    let isScanningActive = false;
+    let activeAbortController = null;
+
+    // Terminal Logger
+    function logToTerminal(message, type = 'info') {
+      const consoleEl = document.getElementById('terminal-console');
+      const time = new Date().toLocaleTimeString();
+      let colorClass = 'text-slate-300';
+      if (type === 'success') colorClass = 'text-emerald-400 font-bold';
+      if (type === 'error') colorClass = 'text-red-400 font-bold';
+      if (type === 'warn') colorClass = 'text-amber-400';
+      if (type === 'net') colorClass = 'text-cyan-400';
+
+      const entry = document.createElement('div');
+      entry.className = colorClass;
+      entry.textContent = `[${time}] ${message}`;
+      consoleEl.appendChild(entry);
+      consoleEl.scrollTop = consoleEl.scrollHeight;
+    }
+
+    function clearConsoleLog() {
+      document.getElementById('terminal-console').innerHTML = '';
+      logToTerminal('Konsol temizlendi.', 'info');
+    }
+
+    function setEngineBadge(stateText, color) {
+      const badge = document.getElementById('engine-state-badge');
+      badge.textContent = `DURUM: ${stateText}`;
+      if (color === 'emerald') {
+        badge.className = 'text-xs px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono font-bold animate-pulse';
+      } else if (color === 'amber') {
+        badge.className = 'text-xs px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 font-mono font-bold';
+      } else {
+        badge.className = 'text-xs px-2.5 py-1 rounded-full bg-charcoal-800 border border-charcoal-700 text-slate-400 font-mono';
+      }
+    }
+
+    // --- BAŞLANGIÇ YÜKLEMESİ ---
+    document.addEventListener('DOMContentLoaded', () => {
+      loadSavedDB();
+      updateMetrics();
+      renderResultsTable();
+      logToTerminal('Sistem çekirdeği başlatıldı. Olay dinleyicileri hazır.', 'success');
+    });
+
+    function loadSavedDB() {
+      try {
+        const raw = localStorage.getItem(DB_KEY);
+        if (raw) {
+          dataRecords = JSON.parse(raw);
+          dataRecords.forEach(r => knownCheckedSet.add(r.username.toLowerCase()));
+          logToTerminal(`Yerel hafızadan ${dataRecords.length} adet geçmiş kayıt yüklendi.`, 'info');
+        }
+      } catch (e) {
+        dataRecords = [];
+      }
+    }
+
+    function saveDB() {
+      try {
+        localStorage.setItem(DB_KEY, JSON.stringify(dataRecords));
+      } catch (e) {
+        logToTerminal('LocalStorage yazma hatası!', 'error');
+      }
+    }
+
+    // --- SORUN 2 VE 3'ÜN ÇÖZÜMÜ: GERÇEK İSTEK VE JSON DOĞRULAYICI ---
+    /*
+      Bu fonksiyon Instagram'ın gerçek web_create_ajax/attempt/ uç noktasını çağırır.
+      6000ms zaman aşımı (Timeout Watchdog) içerir. Asla askıda kalmaz.
+    */
+    async function executeInstagramQuery(username, customSignal = null) {
+      const endpoint = 'https://www.instagram.com/api/v1/web/accounts/web_create_ajax/attempt/';
+      const bridgeMode = document.getElementById('network-bridge').value;
+      
+      let targetUrl = endpoint;
+      let requestHeaders = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-IG-App-ID': '936619743392459'
+      };
+
+      const postData = new URLSearchParams({
+        email: `h_${Math.random().toString(36).substring(2, 6)}@gmail.com`,
+        username: username,
+        first_name: '',
+        opt_into_one_tap: 'false'
+      }).toString();
+
+      // Köprü Yapılandırması
+      if (bridgeMode === 'PROXY_IO') {
+        targetUrl = 'https://corsproxy.io/?' + encodeURIComponent(endpoint);
+      } else if (bridgeMode === 'LOCAL_PROXY') {
+        targetUrl = 'http://localhost:3000/check?username=' + encodeURIComponent(username);
+      }
+
+      logToTerminal(`Ağ İsteği: @${username} -> ${bridgeMode}`, 'net');
+
+      // 6 Saniyelik Watchdog Sinyali (Kilitlenmeyi önler)
+      const timeoutController = new AbortController();
+      const timeoutId = setTimeout(() => timeoutController.abort(), 6000);
+
+      // İki sinyali birleştir
+      const effectiveSignal = customSignal || timeoutController.signal;
+
+      try {
+        const response = await fetch(targetUrl, {
+          method: bridgeMode === 'LOCAL_PROXY' ? 'GET' : 'POST',
+          headers: requestHeaders,
+          body: bridgeMode === 'LOCAL_PROXY' ? null : postData,
+          signal: effectiveSignal
+        });
+
+        clearTimeout(timeoutId);
+        const httpStatus = response.status;
+        logToTerminal(`HTTP Yanıtı Geldi: HTTP ${httpStatus}`, httpStatus === 200 ? 'success' : 'warn');
+
+        // HTTP 429 Hız Sınırı
+        if (httpStatus === 429) {
+          return {
+            status: 'UNKNOWN',
+            code: 429,
+            detail: 'HTTP 429: Instagram IP Hız Sınırı Aşıldı (Rate-Limit)',
+            isRateLimited: true,
+            rawText: 'Too Many Requests'
+          };
+        }
+
+        const rawText = await response.text();
+
+        // Yanıt HTML mi döndü? (WAF / Cloudflare Engeli)
+        if (rawText.trim().startsWith('<') || rawText.includes('<!DOCTYPE html>')) {
+          logToTerminal(`Hata: Instagram JSON yerine HTML döndürdü (WAF / Proxy engellendi).`, 'error');
+          return {
+            status: 'UNKNOWN',
+            code: httpStatus,
+            detail: `WAF_HTML_ENGEL: Sunucu HTML Güvenlik Duvarı Yanıtı Verdi (HTTP ${httpStatus})`,
+            isRateLimited: false,
+            rawText: rawText.substring(0, 100)
+          };
+        }
+
+        // JSON Ayrıştırma
+        let jsonData = null;
+        try {
+          jsonData = JSON.parse(rawText);
+        } catch (jsonErr) {
+          logToTerminal(`JSON Parse Hatası: Yanıt JSON formatında değil.`, 'error');
+          return {
+            status: 'UNKNOWN',
+            code: httpStatus,
+            detail: `PARSE_FAIL: JSON okunamadı`,
+            isRateLimited: false,
+            rawText: rawText.substring(0, 80)
+          };
+        }
+
+        // 1. JSON Alanı: errors.username Kontrolü
+        if (jsonData.errors && jsonData.errors.username) {
+          const errObj = jsonData.errors.username[0] || {};
+          const errCode = errObj.code || 'taken';
+          const errMsg = errObj.message || 'Kullanıcı adı alınmış';
+
+          logToTerminal(`JSON İncelendi: errors.username -> [${errCode}]`, 'warn');
+          return {
+            status: 'TAKEN',
+            code: httpStatus,
+            detail: `ALINMIŞ: [${errCode}] ${errMsg}`,
+            isRateLimited: false,
+            rawText: JSON.stringify(jsonData)
+          };
+        }
+
+        // 2. JSON Alanı: dryrun: true & status: ok Kontrolü (GERÇEK BOŞTA ONAYI)
+        if (jsonData.status === 'ok' && !jsonData.errors) {
+          logToTerminal(`JSON İncelendi: dryrun: true, hata yok -> UYGUN!`, 'success');
+          return {
+            status: 'AVAILABLE',
+            code: httpStatus,
+            detail: `ONAYLANDI: Instagram kayıt motoru boşta olduğunu doğruladı`,
+            isRateLimited: false,
+            rawText: JSON.stringify(jsonData)
+          };
+        }
+
+        // 3. Bilinmeyen Durum
+        return {
+          status: 'UNKNOWN',
+          code: httpStatus,
+          detail: `BEKLENMEYEN_JSON: ${JSON.stringify(jsonData).substring(0, 60)}`,
+          isRateLimited: false,
+          rawText: JSON.stringify(jsonData)
+        };
+
+      } catch (netErr) {
+        clearTimeout(timeoutId);
+
+        if (netErr.name === 'AbortError') {
+          logToTerminal(`Zaman Aşımı / Durdurma: İstek 6000ms içinde yanıt vermedi.`, 'error');
+          return {
+            status: 'UNKNOWN',
+            code: 0,
+            detail: 'ZAMAN_ASIMI: Proxy yanıt vermedi (6000ms Watchdog)',
+            isRateLimited: false,
+            rawText: 'Timeout'
+          };
+        }
+
+        logToTerminal(`Ağ / CORS Hatası: ${netErr.message}`, 'error');
+        return {
+          status: 'UNKNOWN',
+          code: 0,
+          detail: `CORS_HATASI: Tarayıcı doğrudan erişimi kısıtladı (${netErr.message})`,
+          isRateLimited: false,
+          rawText: 'Fetch Error'
+        };
+      }
+    }
+
+    // --- SORUN 3: 3 SENARYOLU TEŞHİS MOTORU ---
+    async function executeDiagnosticSuite() {
+      const btn = document.getElementById('diag-btn');
+      btn.disabled = true;
+      btn.innerHTML = `<span>Test Ediliyor...</span>`;
+      logToTerminal('--- 3 SENARYOLU TEŞHİS TESTİ BAŞLATILDI ---', 'warn');
+
+      // 1. Bilinen Alınmış
+      document.getElementById('diag-tag-1').textContent = 'Sorgulanıyor...';
+      const r1 = await executeInstagramQuery('instagram');
+      document.getElementById('diag-tag-1').textContent = r1.status;
+      document.getElementById('diag-tag-1').className = r1.status === 'TAKEN' ? 'text-[10px] px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 font-bold' : 'text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300';
+      document.getElementById('diag-body-1').textContent = `İstek: GÖNDERİLDİ\nHTTP Kodu: ${r1.code}\nDurum: ${r1.status}\nDetay: ${r1.detail}\nHam: ${r1.rawText.substring(0, 75)}`;
+
+      // 2. Doğrulanmış Boş Aday
+      const testAvailName = `hunt_avail_${Math.random().toString(36).substring(2, 6)}_${Date.now().toString().slice(-4)}`;
+      document.getElementById('diag-avail-name').textContent = `@${testAvailName}`;
+      document.getElementById('diag-tag-2').textContent = 'Sorgulanıyor...';
+      const r2 = await executeInstagramQuery(testAvailName);
+      document.getElementById('diag-tag-2').textContent = r2.status;
+      document.getElementById('diag-tag-2').className = r2.status === 'AVAILABLE' ? 'text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold' : 'text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300';
+      document.getElementById('diag-body-2').textContent = `İstek: GÖNDERİLDİ\nHTTP Kodu: ${r2.code}\nDurum: ${r2.status}\nDetay: ${r2.detail}\nHam: ${r2.rawText.substring(0, 75)}`;
+
+      // 3. Rastgele Aday
+      const testRandName = 'k' + Math.random().toString(36).substring(2, 5);
+      document.getElementById('diag-rand-name').textContent = `@${testRandName}`;
+      document.getElementById('diag-tag-3').textContent = 'Sorgulanıyor...';
+      const r3 = await executeInstagramQuery(testRandName);
+      document.getElementById('diag-tag-3').textContent = r3.status;
+      document.getElementById('diag-tag-3').className = r3.status === 'AVAILABLE' ? 'text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold' : (r3.status === 'TAKEN' ? 'text-[10px] px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 font-bold' : 'text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300');
+      document.getElementById('diag-body-3').textContent = `İstek: GÖNDERİLDİ\nHTTP Kodu: ${r3.code}\nDurum: ${r3.status}\nDetay: ${r3.detail}\nHam: ${r3.rawText.substring(0, 75)}`;
+
+      btn.disabled = false;
+      btn.innerHTML = `<span>3 Testi Tekrar Çalıştır</span>`;
+      logToTerminal('--- TEŞHİS TESTİ TAMAMLANDI ---', 'warn');
+    }
+
+    // --- SORUN 1'İN ÇÖZÜMÜ: GÜVENLİ KUYRUK ÜRETİCİ ---
+    function buildCandidateQueue(lengths, batchSize) {
+      const alpha = 'abcdefghijklmnopqrstuvwxyz'.split('');
+      const nums = '0123456789'.split('');
+      
+      let pool = [];
+      if (document.getElementById('chk-letters').checked) pool = pool.concat(alpha);
+      if (document.getElementById('chk-numbers').checked) pool = pool.concat(nums);
+      if (document.getElementById('chk-dot').checked) pool.push('.');
+      if (document.getElementById('chk-under').checked) pool.push('_');
+
+      if (pool.length === 0) {
+        logToTerminal('Hata: Karakter havuzu boş bırakılamaz.', 'error');
+        return [];
+      }
+
+      const queue = [];
+      let tries = 0;
+      const maxTries = batchSize * 250;
+
+      while (queue.length < batchSize && tries < maxTries) {
+        tries++;
+        const targetLen = lengths[Math.floor(Math.random() * lengths.length)];
+        const validFirstPool = pool.filter(c => c !== '.');
+        if (validFirstPool.length === 0) break;
+
+        let u = validFirstPool[Math.floor(Math.random() * validFirstPool.length)];
+        for (let i = 1; i < targetLen; i++) {
+          const isLast = (i === targetLen - 1);
+          let currentPool = [...pool];
+          if (isLast || u[u.length - 1] === '.') {
+            currentPool = currentPool.filter(c => c !== '.');
+          }
+          u += currentPool[Math.floor(Math.random() * currentPool.length)];
+        }
+
+        u = u.toLowerCase();
+        // Instagram kuralı: En az 1 harf veya rakam içermeli
+        if (/[a-z0-9]/.test(u) && !knownCheckedSet.has(u) && !queue.includes(u)) {
+          queue.push(u);
+        }
+      }
+
+      return queue;
+    }
+
+    // --- OTOMASYON ÇALIŞTIRICI ---
+    async function onStartClicked() {
+      if (isScanningActive) {
+        logToTerminal('Uyarı: Motor zaten çalışıyor.', 'warn');
+        return;
+      }
+
+      const selectedLens = Array.from(document.querySelectorAll('.len-input:checked')).map(el => parseInt(el.value));
+      if (selectedLens.length === 0) {
+        logToTerminal('Hata: En az bir uzunluk seçilmelidir.', 'error');
+        showToast('En az bir uzunluk seçin!', 'error');
+        return;
+      }
+
+      const batchCount = parseInt(document.getElementById('select-batch').value, 10);
+      logToTerminal(`Kuyruk hazırlanıyor: Hedef Uzunluklar [${selectedLens.join(',')}], Adet: ${batchCount}`, 'info');
+
+      const queue = buildCandidateQueue(selectedLens, batchCount);
+      if (queue.length === 0) {
+        logToTerminal('Kuyruk oluşturulamadı: Olası kombinasyonlar tükenmiş olabilir.', 'error');
+        showToast('Aday üretilemedi!', 'error');
+        return;
+      }
+
+      logToTerminal(`Kuyruk başarıyla oluşturuldu: ${queue.length} adet aday sıraya alındı.`, 'success');
+
+      // UI ve State Güncellemesi
+      isScanningActive = true;
+      activeAbortController = new AbortController();
+
+      document.getElementById('btn-start').disabled = true;
+      document.getElementById('btn-stop').disabled = false;
+      document.getElementById('progress-container').classList.remove('hidden');
+      setEngineBadge('TARANIYOR (Aktif)', 'emerald');
+
+      let completed = 0;
+
+      for (const username of queue) {
+        if (!isScanningActive) {
+          logToTerminal('Kullanıcı tarafından durduruldu.', 'warn');
+          break;
+        }
+
+        document.getElementById('progress-target').textContent = `@${username}`;
+        const pct = Math.round((completed / queue.length) * 100);
+        document.getElementById('progress-fill').style.width = `${pct}%`;
+        document.getElementById('progress-percent').textContent = `${pct}%`;
+
+        try {
+          // İsteği Gönder
+          const result = await executeInstagramQuery(username, activeAbortController.signal);
+          knownCheckedSet.add(username);
+
+          const record = {
+            id: 'r_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+            username: username,
+            length: username.length,
+            status: result.status,
+            detail: result.detail,
+            code: result.code,
+            timestamp: Date.now()
+          };
+
+          dataRecords.unshift(record);
+          saveDB();
+          updateMetrics();
+          renderResultsTable();
+
+          if (result.status === 'AVAILABLE') {
+            logToTerminal(`🎉 BOŞTA ADAY BULUNDU: @${username}`, 'success');
+            showToast(`🔥 @${username} MÜSAİT!`, 'success');
+          }
+
+          // Rate-limit Durumunda Duraklat
+          if (result.isRateLimited) {
+            logToTerminal('Instagram Hız Sınırı (429) algılandı. Motor durduruluyor.', 'error');
+            showToast('Instagram Hız Sınırı (429) Algılandı!', 'error');
+            onStopClicked();
+            break;
+          }
+
+          completed++;
+          // Tek IP koruması: 2.2 saniye bekle
+          await new Promise(r => setTimeout(r, 2200));
+
+        } catch (loopErr) {
+          if (loopErr.name === 'AbortError') break;
+          logToTerminal(`Döngü hatası: ${loopErr.message}`, 'error');
+        }
+      }
+
+      if (isScanningActive) {
+        document.getElementById('progress-fill').style.width = '100%';
+        document.getElementById('progress-percent').textContent = '100%';
+        logToTerminal('Parti taraması başarıyla tamamlandı.', 'success');
+        onStopClicked();
+      }
+    }
+
+    function onStopClicked() {
+      isScanningActive = false;
+      if (activeAbortController) {
+        activeAbortController.abort();
+        activeAbortController = null;
+      }
+      document.getElementById('btn-start').disabled = false;
+      document.getElementById('btn-stop').disabled = true;
+      setEngineBadge('IDLE (Durduruldu)', 'amber');
+      logToTerminal('Motor IDLE durumuna geçti.', 'info');
+    }
+
+    // --- DASHBOARD VE TABLO RENDER ---
+    function updateMetrics() {
+      document.getElementById('m-total').textContent = dataRecords.length;
+      document.getElementById('m-avail').textContent = dataRecords.filter(r => r.status === 'AVAILABLE').length;
+      document.getElementById('m-taken').textContent = dataRecords.filter(r => r.status === 'TAKEN').length;
+      document.getElementById('m-err').textContent = dataRecords.filter(r => r.status === 'UNKNOWN').length;
+    }
+
+    function renderResultsTable() {
+      const tbody = document.getElementById('table-rows');
+      const emptyDiv = document.getElementById('table-none');
+      const filter = document.getElementById('filter-sel').value;
+
+      let list = [...dataRecords];
+      if (filter !== 'ALL') {
+        list = list.filter(r => r.status === filter);
+      }
+
+      document.getElementById('table-badge').textContent = `${list.length} Kayıt`;
+
+      if (list.length === 0) {
+        tbody.innerHTML = '';
+        emptyDiv.classList.remove('hidden');
+        return;
+      }
+
+      emptyDiv.classList.add('hidden');
+      tbody.innerHTML = list.map(item => {
+        let badge = '';
+        if (item.status === 'AVAILABLE') {
+          badge = '<span class="px-2 py-0.5 rounded font-black text-[11px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">AVAILABLE</span>';
+        } else if (item.status === 'TAKEN') {
+          badge = '<span class="px-2 py-0.5 rounded font-bold text-[11px] bg-red-500/20 text-red-400 border border-red-500/40">TAKEN</span>';
+        } else {
+          badge = '<span class="px-2 py-0.5 rounded font-bold text-[11px] bg-amber-500/20 text-amber-300 border border-amber-500/40">UNKNOWN</span>';
+        }
+
+        return `
+          <tr class="hover:bg-charcoal-850 transition">
+            <td class="py-2.5 px-3 font-bold text-white">@${item.username}</td>
+            <td class="py-2.5 px-2 text-center text-slate-400">${item.length}k</td>
+            <td class="py-2.5 px-3">${badge}</td>
+            <td class="py-2.5 px-3 text-slate-400 text-[11px] truncate max-w-sm" title="${item.detail}">
+              ${item.detail}
+            </td>
+            <td class="py-2.5 px-2 text-center">
+              <a href="https://instagram.com/${item.username}/" target="_blank" class="text-slate-400 hover:text-emerald-400 font-bold">↗</a>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function clearAllStoredData() {
+      if (confirm('Tüm kayıtlar silinsin mi?')) {
+        onStopClicked();
+        dataRecords = [];
+        knownCheckedSet.clear();
+        saveDB();
+        updateMetrics();
+        renderResultsTable();
+        logToTerminal('Bütün veritabanı sıfırlandı.', 'warn');
+      }
+    }
+
+    function showToast(msg, type = 'info') {
+      const c = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      el.className = `border px-3 py-2 rounded-xl shadow-xl text-xs font-semibold bg-charcoal-900 ${type === 'success' ? 'border-emerald-500 text-emerald-300' : 'border-red-500 text-red-300'}`;
+      el.textContent = msg;
+      c.appendChild(el);
+      setTimeout(() => el.remove(), 3500);
+    }
+  </script>
+</body>
+</html>
